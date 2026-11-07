@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MD Cosmedi — Cơ chế Kinh doanh</title>
+<style>
+  :root{
+    --bg:#0b0f17; --panel:#121826; --panel2:#161f30; --accent:#4f8cff; --accent2:#22c58b;
+    --accent3:#ffb84f; --danger:#ff5d6c; --text:#eef2f9; --muted:#9aa7bd; --line:#223049;
+    --kd:#4f8cff; --cs:#22c58b; --tn:#b48bff;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,-apple-system,sans-serif;scroll-behavior:smooth;}
+  .deck{width:100%;}
+  section.slide{
+    min-height:100vh;width:100%;display:flex;flex-direction:column;justify-content:center;
+    padding:60px 8vw;position:relative;border-bottom:1px solid var(--line);
+    background:radial-gradient(circle at 15% 15%, rgba(79,140,255,0.06), transparent 50%),
+               radial-gradient(circle at 85% 85%, rgba(34,197,139,0.05), transparent 50%);
+  }
+  .eyebrow{color:var(--accent);font-weight:700;letter-spacing:2px;text-transform:uppercase;font-size:13px;margin-bottom:10px;}
+  h1{font-size:44px;margin:0 0 14px;line-height:1.15;font-weight:800;}
+  h2{font-size:30px;margin:0 0 20px;font-weight:800;color:var(--text);}
+  h3{font-size:20px;margin:0 0 10px;color:var(--accent);font-weight:700;}
+  p.sub{color:var(--muted);font-size:17px;max-width:860px;line-height:1.6;}
+  .pagenum{position:absolute;bottom:22px;right:8vw;color:var(--muted);font-size:13px;font-weight:600;}
+  .tag{position:absolute;top:22px;right:8vw;color:var(--muted);font-size:13px;}
+
+  .grid{display:grid;gap:20px;}
+  .grid-2{grid-template-columns:1fr 1fr;}
+  .grid-3{grid-template-columns:1fr 1fr 1fr;}
+  .grid-4{grid-template-columns:1fr 1fr 1fr 1fr;}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:24px;}
+  .card.glow-kd{border-color:rgba(79,140,255,0.4);}
+  .card.glow-cs{border-color:rgba(34,197,139,0.4);}
+  .card.glow-tn{border-color:rgba(180,139,255,0.4);}
+
+  .kpi{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:20px;text-align:center;}
+  .kpi .val{font-size:34px;font-weight:800;color:var(--accent);}
+  .kpi .lbl{color:var(--muted);font-size:13px;margin-top:6px;}
+
+  table{width:100%;border-collapse:collapse;font-size:14.5px;}
+  th,td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;}
+  th{background:var(--panel2);color:var(--accent);font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:0.5px;}
+  tr:hover td{background:rgba(255,255,255,0.02);}
+  .num{text-align:right;font-variant-numeric:tabular-nums;}
+  .tbl-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--line);}
+
+  .pill{display:inline-block;padding:4px 12px;border-radius:999px;font-size:12px;font-weight:700;}
+  .pill-kd{background:rgba(79,140,255,0.15);color:var(--kd);}
+  .pill-cs{background:rgba(34,197,139,0.15);color:var(--cs);}
+  .pill-tn{background:rgba(180,139,255,0.15);color:var(--tn);}
+  .pill-good{background:rgba(34,197,139,0.15);color:var(--accent2);}
+  .pill-warn{background:rgba(255,184,79,0.15);color:var(--accent3);}
+  .pill-bad{background:rgba(255,93,108,0.15);color:var(--danger);}
+
+  .flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .flow .step{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px 16px;font-weight:700;font-size:14px;white-space:nowrap;}
+  .flow .arrow{color:var(--muted);font-size:20px;}
+
+  .formula{background:linear-gradient(135deg, rgba(79,140,255,0.12), rgba(34,197,139,0.08));
+    border:1px solid var(--accent); border-radius:14px; padding:18px 26px; font-size:19px; font-weight:700;
+    display:inline-block; margin:14px 0; color:var(--text);}
+
+  ul.cl{list-style:none;padding:0;margin:0;}
+  ul.cl li{padding:8px 0 8px 28px;position:relative;color:var(--text);font-size:15px;line-height:1.5;}
+  ul.cl li::before{content:'✓';position:absolute;left:0;color:var(--accent2);font-weight:900;}
+  ul.xl li::before{content:'✕';color:var(--danger);}
+
+  .title-slide{align-items:center;text-align:center;justify-content:center;}
+  .title-slide h1{font-size:58px;}
+  .cover-badge{display:inline-flex;gap:10px;margin-top:30px;}
+  .cover-badge span{background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:8px 18px;font-size:13px;color:var(--muted);}
+
+  .scale-note{color:var(--muted);font-size:13px;margin-top:8px;}
+  .bignum{font-size:60px;font-weight:900;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent;}
+
+  .nav{position:fixed;top:0;left:0;width:100%;height:4px;background:var(--line);z-index:50;}
+  .nav-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0%;transition:width .2s;}
+  .dots{position:fixed;right:18px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:7px;z-index:50;}
+  .dots a{width:8px;height:8px;border-radius:50%;background:var(--line);display:block;transition:all .2s;}
+  .dots a.active{background:var(--accent);width:10px;height:10px;}
+
+  .two-col{display:grid;grid-template-columns:1.1fr 1fr;gap:28px;align-items:center;}
+  .compare-col{border-radius:14px;padding:22px;border:1px solid var(--line);}
+  .compare-old{background:rgba(255,93,108,0.05);border-color:rgba(255,93,108,0.25);}
+  .compare-new{background:rgba(34,197,139,0.05);border-color:rgba(34,197,139,0.25);}
+
+  .funnel-box{display:flex;flex-direction:column;gap:6px;}
+  .funnel-row{display:flex;justify-content:space-between;padding:10px 16px;border-radius:10px;font-weight:700;font-size:14px;}
+
+  .scroll-hint{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);color:var(--muted);font-size:12px;z-index:50;animation:bounce 2s infinite;}
+  @keyframes bounce{0%,100%{transform:translate(-50%,0);}50%{transform:translate(-50%,6px);}}
+
+  @media print{
+    .nav,.dots,.scroll-hint{display:none;}
+  }
+  @media (max-width:900px){
+    .grid-2,.grid-3,.grid-4{grid-template-columns:1fr;}
+    .two-col{grid-template-columns:1fr;}
+    h1{font-size:30px;} h2{font-size:24px;}
+    section.slide{padding:40px 6vw;}
+  }
+</style>
+</head>
+<body>
+
+<div class="nav"><div class="nav-fill" id="navFill"></div></div>
+<div class="dots" id="dots"></div>
+<div class="scroll-hint" id="scrollHint">⌵ Lướt xuống để xem tiếp</div>
+
+<div class="deck">
+
+<!-- SLIDE 1: COVER -->
+<section class="slide title-slide" id="s1">
+  <div class="eyebrow">MD COSMEDI · PHÒNG KINH DOANH</div>
+  <h1>Cơ chế Lương, Hoa hồng<br>và Thưởng</h1>
+  <p class="sub" style="margin:0 auto;">Hệ thống trả thu nhập theo kết quả: minh bạch, tự tính được, khuyến khích mở khách mới và giữ vững khách hiện hữu — trong một trần chi phí được kiểm soát chặt.</p>
+  <div class="cover-badge">
+    <span>9 chương · 31 điều</span>
+    <span>Trần quỹ nhân sự: 12% doanh thu</span>
+    <span>Áp dụng: toàn Phòng Kinh doanh</span>
+  </div>
+</section>
+
+<!-- SLIDE 2: TẠI SAO ĐỔI -->
+<section class="slide" id="s2">
+  <div class="eyebrow">01 · VÌ SAO CƠ CHẾ ĐANG ÁP DỤNG KHÔNG CÒN PHÙ HỢP</div>
+  <h2>Cơ chế cũ trông đơn giản — nhưng đơn giản ở đây nghĩa là đang bỏ sót rất nhiều vấn đề thật</h2>
+  <p class="sub">Cơ chế hiện tại: 6 triệu lương cứng + 2 triệu phụ cấp + 2 triệu KPI cho MỌI người, hoa hồng chỉ chia theo 4 mốc doanh thu tuyệt đối (dưới 100tr / 100-200tr / 200-500tr / trên 500tr) giống nhau cho tất cả, không phân biệt bậc năng lực, không thưởng, không trần chi phí. Nhìn thì gọn, nhưng gọn vì đang thiếu — không phải vì đã được thiết kế tối ưu. 5 lỗ hổng cụ thể dưới đây là lý do không thể "thấy đơn giản thì cứ dùng tiếp".</p>
+  <div class="grid grid-2" style="margin-top:14px;">
+    <div class="card">
+      <h3>① Cào bằng — không phân biệt năng lực</h3>
+      <p class="sub" style="font-size:14.5px;">Lương cứng 10 triệu và cùng một bảng mốc hoa hồng áp dụng cho MỌI người, từ người mới vào đến người làm 3 năm. Người giỏi và người trung bình nhận y hệt nhau nếu cùng mức doanh thu — không có lý do để phấn đấu lên "bậc" vì <b>không hề tồn tại khái niệm bậc</b>. Hệ quả thực tế: người giỏi nhất phòng dễ cảm thấy bị trả thấp hơn giá trị, trong khi người mới không có mục tiêu rõ ràng để phấn đấu.</p>
+    </div>
+    <div class="card">
+      <h3>② Không phân biệt nguồn khách — triệt tiêu động lực mở thị trường</h3>
+      <p class="sub" style="font-size:14.5px;">Một đơn do Công ty tự nhiên cấp (khách gọi vào, fanpage) và một đơn do nhân viên tự đi tìm, tự thuyết phục từ đầu — được trả <b>CÙNG một tỷ lệ</b>. Không có lý do gì để nhân viên bỏ công sức tự đi mở khách mới, vì ngồi chờ khách Công ty cấp cho vẫn nhận tiền như nhau. Đây là nguyên nhân cốt lõi khiến phòng Kinh doanh phụ thuộc hoàn toàn vào nguồn khách do Công ty rót vào, không tự mở rộng được thị trường.</p>
+    </div>
+    <div class="card">
+      <h3>③ Không có thưởng — chỉ có một cách duy nhất để kiếm thêm tiền</h3>
+      <p class="sub" style="font-size:14.5px;">Không có thưởng tự tìm khách, thưởng đơn lớn, thưởng phát triển đại lý/đối tác, thưởng tái kích hoạt khách ngủ đông, thưởng quý. Toàn bộ động lực thu nhập chỉ nằm ở một con số: tổng doanh thu tháng. Điều này khiến nhân viên không có lý do để làm những việc khó hơn nhưng có giá trị lâu dài (chăm khách cũ quay lại, tìm đại lý mới, xử lý đơn khó) — vì những việc đó không được trả thêm một đồng nào.</p>
+    </div>
+    <div class="card">
+      <h3>④ Một người vừa mở khách vừa chăm sóc mãi mãi — không ai chuyên sâu được việc gì</h3>
+      <p class="sub" style="font-size:14.5px;">Không có khái niệm bàn giao giữa "người đi tìm khách" và "người giữ khách lâu dài". Người giỏi bán hàng mới bị kẹt lại ở việc chăm sóc khách cũ (vốn không phải thế mạnh và mất thời gian), thay vì được giải phóng để tiếp tục đi tìm khách mới — đội ngũ không thể chuyên môn hóa, không thể nhân bản quy mô.</p>
+    </div>
+    <div class="card">
+      <h3>⑤ Không có trần chi phí — Công ty không dự báo được ngân sách</h3>
+      <p class="sub" style="font-size:14.5px;">Chi phí hoa hồng không có bất kỳ giới hạn nào trên doanh thu. Tháng doanh thu tăng đột biến, hoa hồng cũng tăng theo tỷ lệ cố định mà không ai kiểm tra xem tổng % chi phí/doanh thu đang là bao nhiêu — Ban điều hành không có công cụ để trả lời câu hỏi cơ bản nhất: "Tháng này Phòng Kinh doanh đang tốn bao nhiêu % trên mỗi đồng doanh thu?"</p>
+    </div>
+    <div class="card">
+      <h3>⑥ Không có lộ trình thăng tiến — người giỏi không thấy tương lai, dễ rời đi</h3>
+      <p class="sub" style="font-size:14.5px;">Không có bậc, không có tiêu chí lên lương rõ ràng, không có con đường lên quản lý (trưởng nhóm). Người làm tốt 2-3 năm vẫn nhận đúng mức lương như ngày đầu nếu doanh thu dao động trong cùng một khoảng — đây là nguyên nhân âm thầm khiến nhân sự giỏi nhất rời đi tìm nơi có lộ trình rõ ràng hơn, dù thu nhập trước mắt không chênh lệch nhiều.</p>
+    </div>
+  </div>
+  <div class="formula" style="margin-top:20px;">Mục tiêu cơ chế mới: Trả đúng kết quả · Giữ người giỏi · Mở khách mới · Kiểm soát được ngân sách</div>
+</section>
+
+<!-- SLIDE 2b: BẰNG CHỨNG SỐ LIỆU -->
+<section class="slide" id="s2b">
+  <div class="eyebrow">01 · VÌ SAO CƠ CHẾ ĐANG ÁP DỤNG KHÔNG CÒN PHÙ HỢP (tiếp)</div>
+  <h2>Không phải cảm tính — đây là bằng chứng bằng số, trên cùng một tình huống thật</h2>
+  <p class="sub">Cùng một mức doanh thu, cùng một kết quả thật — cơ chế cũ trả tiền mù quáng theo công thức cứng, không phân biệt chất lượng công sức bỏ ra; cơ chế mới trả đúng theo mức độ đóng góp thật.</p>
+  <div class="tbl-wrap" style="margin-top:10px;">
+    <table style="font-size:14px;">
+      <thead><tr><th>Tình huống thật</th><th class="num">Cơ chế cũ: thu nhập (% DT)</th><th class="num">Cơ chế mới: thu nhập (% DT)</th><th>Điều cơ chế cũ không phân biệt được</th></tr></thead>
+      <tbody>
+        <tr><td>Nhân viên bậc 1, làm đúng 200tr chỉ tiêu, toàn khách tự khai thác</td><td class="num">17.00tr (9.1%)</td><td class="num">17.00tr (9.1%)</td><td>Ngang nhau — đúng khi công sức tương đương</td></tr>
+        <tr><td>Nhân viên <b>chỉ đạt 80%</b> chỉ tiêu (160tr, dưới mức kỳ vọng)</td><td class="num" style="color:var(--danger);">15.20tr (10.3%)</td><td class="num">13.20tr (9.1%)</td><td>Cơ chế cũ vẫn trả gần bằng người đạt đủ chỉ tiêu — <b>không phạt được người làm dưới kỳ vọng</b></td></tr>
+        <tr><td>Cùng 200tr nhưng <b>toàn bộ là đơn đối tác giới thiệu</b> (nhân viên gần như không mất công tìm khách)</td><td class="num" style="color:var(--danger);">17.00tr (9.1%)</td><td class="num">13.20tr (7.2%)</td><td>Cơ chế cũ trả y hệt người tự đi tìm khách — <b>không phân biệt được ai bỏ công sức thật, ai chỉ ngồi nhận khách có sẵn</b></td></tr>
+        <tr><td>Nhân viên <b>vượt 150% chỉ tiêu</b> (450tr, nỗ lực vượt trội)</td><td class="num" style="color:var(--danger);">25.75tr (6.0%)</td><td class="num">29.50tr (6.9%)</td><td>Cơ chế cũ không thưởng thêm tương xứng cho người vượt trội — <b>người giỏi nhất phòng bị trả thiệt</b></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="card" style="margin-top:18px;border-color:rgba(255,93,108,0.4);">
+    <h3 style="color:var(--danger);">Kết luận không thể chối cãi</h3>
+    <p class="sub" style="font-size:15px;margin:0;">Ở cùng một số tiền thu về, cơ chế cũ trả ra MỘT con số bất kể chất lượng công sức phía sau nó. Hệ quả hai chiều: <b>trả hớ cho đơn ít công sức và người làm dưới chuẩn</b>, đồng thời <b>trả thiếu cho người giỏi nhất</b>. Đây không phải lỗi vận hành có thể "chỉnh tay" từng tháng — mà là lỗi thiết kế nằm trong chính công thức, chỉ sửa được bằng cách thay cơ chế.</p>
+  </div>
+</section>
+
+<!-- SLIDE 3: CẤU TRÚC THU NHẬP -->
+<section class="slide" id="s3">
+  <div class="eyebrow">02 · CẤU TRÚC THU NHẬP</div>
+  <h2>Thu nhập tháng gồm 5 phần — KPI tách riêng, không gộp vào phần cố định</h2>
+  <div class="formula">TỔNG THU NHẬP&nbsp; =&nbsp; LƯƠNG CƠ BẢN&nbsp; +&nbsp; KPI (LƯƠNG HIỆU SUẤT)&nbsp; +&nbsp; PHỤ CẤP&nbsp; +&nbsp; HOA HỒNG&nbsp; +&nbsp; THƯỞNG</div>
+  <div class="grid grid-3" style="margin-top:14px;">
+    <div class="card glow-kd">
+      <h3>① Lương cơ bản — THẬT SỰ cố định</h3>
+      <p class="sub" style="font-size:14.5px;">Theo bậc, trả đủ theo tháng, không đổi dù kết quả tháng đó thế nào. Đây là phần duy nhất đóng bảo hiểm.</p>
+    </div>
+    <div class="card" style="border-color:rgba(255,184,79,0.4);">
+      <h3>② KPI — lương hiệu suất, KHÔNG cố định</h3>
+      <p class="sub" style="font-size:14.5px;">Lương hiệu suất tối đa của bậc × <b>điểm đánh giá hiệu suất</b> × tỷ lệ ngày công. Điểm đánh giá thay đổi mỗi tháng theo kết quả thực tế (Điều 14) — vì vậy KPI KHÔNG phải một con số cố định, tách riêng khỏi lương cơ bản để không gây hiểu lầm "cứ có là nhận đủ".</p>
+    </div>
+    <div class="card">
+      <h3>③ Phụ cấp — cố định, có định mức</h3>
+      <p class="sub" style="font-size:14.5px;">Đi lại, liên lạc, công việc khác theo Quy chế phụ cấp. Trả theo tỷ lệ ngày công.</p>
+    </div>
+    <div class="card glow-cs">
+      <h3>④ Hoa hồng — theo kết quả tháng</h3>
+      <p class="sub" style="font-size:14.5px;">Doanh thu của bạn × tỷ lệ của <b>mốc</b> bạn đạt trong tháng. Phụ thuộc doanh thu thực trả so với chỉ tiêu.</p>
+    </div>
+    <div class="card glow-tn">
+      <h3>⑤ Thưởng — theo điều kiện đạt được</h3>
+      <p class="sub" style="font-size:14.5px;">Tự tìm khách mới, đơn lớn, tái kích hoạt, đại lý/đối tác mới, thưởng quý, thưởng nóng. Trưởng nhóm có thêm hoa hồng đội + thưởng đội ngũ.</p>
+    </div>
+  </div>
+  <p class="scale-note" style="margin-top:18px;">⏱ Lương cơ bản, KPI và phụ cấp trả theo tháng. Hoa hồng và thưởng của tháng này trả cùng kỳ lương <b>tháng sau</b>, sau khi Kế toán đối chiếu tiền về. Bảo hiểm chỉ đóng trên <b>lương cơ bản</b>, không tính trên KPI/phụ cấp/hoa hồng/thưởng.</p>
+</section>
+
+<!-- SLIDE 4: DOANH THU vs DOANH SỐ -->
+<section class="slide" id="s4">
+  <div class="eyebrow">03 · KHÁI NIỆM GỐC</div>
+  <h2>Doanh thu ≠ Doanh số — chỉ Doanh thu mới ra tiền</h2>
+  <div class="grid grid-2" style="margin-top:10px;">
+    <div class="card glow-kd">
+      <h3>💰 DOANH THU</h3>
+      <p class="sub" style="font-size:15px;">Tiền khách <b>THỰC TRẢ</b> cho Công ty trong tháng (chưa thuế). Cọc, ứng trước tính vào tháng giao hàng.</p>
+      <div class="pill pill-good" style="margin-top:8px;">Dùng để tính MỌI THỨ: chỉ tiêu, mốc, hoa hồng, thưởng, lên bậc, quỹ chi phí</div>
+    </div>
+    <div class="card">
+      <h3>📄 DOANH SỐ</h3>
+      <p class="sub" style="font-size:15px;">Tổng giá trị đơn đã <b>chốt</b>, kể cả khi khách chưa trả tiền.</p>
+      <div class="pill pill-warn" style="margin-top:8px;">Chỉ để theo dõi — KHÔNG dùng để tính tiền</div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:20px;">
+    <h3>Ví dụ minh họa</h3>
+    <p class="sub" style="font-size:15px;">Tháng 11 chốt đơn 100 triệu (= Doanh số T11). Khách trả 60 triệu trong T11, 40 triệu trong T12.<br>
+    → <b>Doanh thu T11 = 60 triệu</b>, <b>Doanh thu T12 = 40 triệu</b>. Hoa hồng tháng nào tính trên doanh thu tháng đó. Khách chưa trả thì chưa có hoa hồng.</p>
+  </div>
+</section>
+
+<!-- SLIDE 5: BẬC LƯƠNG & CHỈ TIÊU -->
+<section class="slide" id="s5">
+  <div class="eyebrow">04 · BẬC LƯƠNG & CHỈ TIÊU</div>
+  <h2>8 bậc chuyên viên + 6 bậc trưởng nhóm — lộ trình rõ ràng</h2>
+  <div class="tbl-wrap" style="margin-top:6px;">
+    <table>
+      <thead><tr><th>Chức danh</th><th>Nhóm</th><th class="num">Lương cơ bản + KPI tối đa + phụ cấp (tr)</th><th class="num">Chỉ tiêu tháng (tr)</th><th class="num">Mốc lên bậc (tr)</th></tr></thead>
+      <tbody>
+        <tr><td>Chuyên viên kinh doanh</td><td><span class="pill pill-kd">Kinh doanh</span></td><td class="num">10.0</td><td class="num">200</td><td class="num">300</td></tr>
+        <tr><td>Chuyên viên kinh doanh chính</td><td><span class="pill pill-kd">Kinh doanh</span></td><td class="num">11.5</td><td class="num">300</td><td class="num">400</td></tr>
+        <tr><td>Chuyên viên kinh doanh cao cấp</td><td><span class="pill pill-kd">Kinh doanh</span></td><td class="num">13.5</td><td class="num">400</td><td class="num">500</td></tr>
+        <tr><td>Chuyên viên kinh doanh chiến lược</td><td><span class="pill pill-kd">Kinh doanh</span></td><td class="num">15.5</td><td class="num">500</td><td class="num">Bậc cao nhất</td></tr>
+        <tr><td>Chuyên viên chăm sóc khách hàng</td><td><span class="pill pill-cs">Chăm sóc</span></td><td class="num">10.0</td><td class="num">350</td><td class="num">500</td></tr>
+        <tr><td>Chuyên viên chăm sóc khách hàng chính</td><td><span class="pill pill-cs">Chăm sóc</span></td><td class="num">11.5</td><td class="num">500</td><td class="num">700</td></tr>
+        <tr><td>Chuyên viên chăm sóc khách hàng cao cấp</td><td><span class="pill pill-cs">Chăm sóc</span></td><td class="num">13.5</td><td class="num">700</td><td class="num">900</td></tr>
+        <tr><td>Chuyên viên chăm sóc khách hàng chiến lược</td><td><span class="pill pill-cs">Chăm sóc</span></td><td class="num">15.5</td><td class="num">900</td><td class="num">Bậc cao nhất</td></tr>
+        <tr><td>Trưởng nhóm kinh doanh (3 cấp)</td><td><span class="pill pill-tn">Quản lý</span></td><td class="num">13.0 – 19.0</td><td class="num">Tự bán 150–250*</td><td class="num">Theo Điều 26</td></tr>
+        <tr><td>Trưởng nhóm chăm sóc khách hàng (3 cấp)</td><td><span class="pill pill-tn">Quản lý</span></td><td class="num">13.5 – 18.5</td><td class="num">Theo đội</td><td class="num">Theo Điều 26</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="scale-note">* Trưởng nhóm kinh doanh: chỉ tiêu tự bán được giảm 10%/thành viên, tối đa 20%. Nhân viên chăm sóc: chỉ tiêu thực tế = doanh thu nền danh mục (bình quân 3 tháng trước).<br>⚠️ Cột "Lương cơ bản + KPI tối đa + phụ cấp" là mức TRẦN khi đạt điểm hiệu suất 100% — phần KPI trong đó biến đổi theo điểm đánh giá mỗi tháng (xem slide trước), không phải số cố định nhận đủ mọi tháng.</p>
+</section>
+
+<!-- SLIDE 6: HOA HỒNG KINH DOANH -->
+<section class="slide" id="s6">
+  <div class="eyebrow">05 · HOA HỒNG — NHÓM KINH DOANH</div>
+  <h2>4 mốc hoa hồng — tỷ lệ nhân cho TOÀN BỘ doanh thu</h2>
+  <div class="formula">HOA HỒNG&nbsp; =&nbsp; DOANH THU QUY ĐỔI&nbsp; ×&nbsp; TỶ LỆ CỦA MỐC ĐẠT ĐƯỢC</div>
+  <div class="tbl-wrap" style="margin-top:10px;">
+    <table>
+      <thead><tr><th>Mốc</th><th>Ngưỡng hoàn thành</th><th class="num">Tỷ lệ hoa hồng</th><th>Ý nghĩa</th></tr></thead>
+      <tbody>
+        <tr><td><span class="pill pill-bad">Mốc 1</span> Chưa đạt</td><td class="num">Từ 0%</td><td class="num">2.0%</td><td>Chưa đạt chỉ tiêu tháng</td></tr>
+        <tr><td><span class="pill pill-good">Mốc 2</span> Đạt chỉ tiêu</td><td class="num">Từ 100%</td><td class="num">3.5%</td><td>Đạt đúng chỉ tiêu bậc</td></tr>
+        <tr><td><span class="pill pill-warn">Mốc 3</span> Vượt</td><td class="num">Từ 150%</td><td class="num">4.0%</td><td>Vượt chỉ tiêu 1.5 lần</td></tr>
+        <tr><td><span class="pill pill-warn">Mốc 4</span> Vượt mạnh</td><td class="num">Từ 200%</td><td class="num">4.2%</td><td>Vượt chỉ tiêu gấp đôi</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="card" style="margin-top:16px;">
+    <h3>⚡ Cú nhảy là CHỦ Ý</h3>
+    <p class="sub" style="font-size:15px;">Chạm đúng ngưỡng → toàn bộ doanh thu nhân tỷ lệ mốc mới. Ví dụ chỉ tiêu 300tr: từ <b>299 → 300 triệu</b>, hoa hồng tăng từ <b>5.98 → 10.50 triệu</b>. Đây là động lực để dồn sức chạm mốc — đi kèm với các điều khoản chặn việc "dời ngày thu tiền" để gian lận mốc.</p>
+  </div>
+</section>
+
+<!-- SLIDE 7: HOA HỒNG CHĂM SÓC -->
+<section class="slide" id="s7">
+  <div class="eyebrow">05 · HOA HỒNG — NHÓM CHĂM SÓC KHÁCH HÀNG</div>
+  <h2>Tỷ lệ Chăm sóc = 50% tỷ lệ Kinh doanh</h2>
+  <div class="formula">HOA HỒNG&nbsp; =&nbsp; DOANH THU DANH MỤC&nbsp; ×&nbsp; TỶ LỆ CỦA MỐC ĐẠT ĐƯỢC</div>
+  <div class="tbl-wrap" style="margin-top:10px;">
+    <table>
+      <thead><tr><th>Mốc</th><th>So với nền (bình quân 3 tháng)</th><th class="num">Tỷ lệ hoa hồng</th></tr></thead>
+      <tbody>
+        <tr><td><span class="pill pill-bad">Mốc 1</span> Chưa đạt</td><td class="num">Chưa tới 95%</td><td class="num">1.0%</td></tr>
+        <tr><td><span class="pill pill-good">Mốc 2</span> Đạt</td><td class="num">Từ 95% nền</td><td class="num">1.75%</td></tr>
+        <tr><td><span class="pill pill-warn">Mốc 3</span> Tăng trưởng</td><td class="num">Từ 110% nền</td><td class="num">2.0%</td></tr>
+        <tr><td><span class="pill pill-warn">Mốc 4</span> Tăng trưởng mạnh</td><td class="num">Từ 125% nền</td><td class="num">2.1%</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="scale-note" style="margin-top:14px;">Chỉ tiêu Chăm sóc = <b>doanh thu nền</b> (bình quân thực tế 3 tháng trước của chính tập khách họ chăm sóc) — không phải số cứng, nên công bằng theo quy mô danh mục. Nhân viên chăm sóc tự tìm & chốt khách mới được hưởng <b>như Kinh doanh (3.5% + thưởng tự tìm)</b>.</p>
+</section>
+
+<!-- SLIDE 8: HÀNH TRÌNH KHÁCH -->
+<section class="slide" id="s8">
+  <div class="eyebrow">06 · PHÂN VAI KINH DOANH ↔ CHĂM SÓC</div>
+  <h2>Một khách, hai vai rõ ràng — không ai "chốt xong là xong"</h2>
+  <div class="flow" style="justify-content:center;margin:20px 0;">
+    <div class="step" style="background:rgba(79,140,255,0.12);border-color:var(--kd);">Tìm kiếm</div>
+    <div class="arrow">→</div>
+    <div class="step" style="background:rgba(79,140,255,0.12);border-color:var(--kd);">Tư vấn</div>
+    <div class="arrow">→</div>
+    <div class="step" style="background:rgba(79,140,255,0.2);border-color:var(--kd);">Chốt đơn đầu<br><span style="color:var(--kd);font-size:12px;">KINH DOANH</span></div>
+    <div class="arrow">→</div>
+    <div class="step" style="background:var(--panel2);">Tạo nhóm &amp; bàn giao<br><span style="font-size:12px;color:var(--muted);">trong 3 ngày làm việc</span></div>
+    <div class="arrow">→</div>
+    <div class="step" style="background:rgba(34,197,139,0.2);border-color:var(--cs);">Chăm sóc → Tái mua<br><span style="color:var(--cs);font-size:12px;">CHĂM SÓC</span></div>
+  </div>
+  <div class="grid grid-2" style="margin-top:14px;">
+    <div class="card glow-kd">
+      <h3>Nhân viên Kinh doanh nhận gì sau khi bàn giao?</h3>
+      <ul class="cl">
+        <li>100% hoa hồng của <b>đơn đầu</b> (kể cả trả nhiều đợt)</li>
+        <li><b>Hoa hồng đồng hành 0.5%</b> trên tiền về đơn mua lại, trong 6 tháng kể từ đơn đầu</li>
+        <li>Điều kiện: bàn giao đủ & đúng hạn, hỗ trợ khi Chăm sóc cần</li>
+      </ul>
+    </div>
+    <div class="card glow-cs">
+      <h3>Nhân viên Chăm sóc nhận gì từ đơn thứ 2?</h3>
+      <ul class="cl">
+        <li>100% doanh thu đơn mua lại tính vào <b>danh mục</b> của mình</li>
+        <li>Hưởng hoa hồng theo mốc riêng (Điều 17)</li>
+        <li>3 tháng đầu bàn giao: vẫn hưởng hoa hồng nhưng <b>chưa tính vào % hoàn thành</b></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 9: NGUỒN KHÁCH -->
+<section class="slide" id="s9">
+  <div class="eyebrow">07 · NGUỒN KHÁCH & HỆ SỐ QUY ĐỔI</div>
+  <h2>5 nguồn khách — chỉ đổi doanh thu quy đổi, KHÔNG đổi % hoa hồng</h2>
+  <p class="sub">Áp cho đơn đầu của nhóm Kinh doanh. Doanh thu Công ty vẫn ghi đủ 100%; hệ số chỉ quyết định phần được tính vào chỉ tiêu/hoa hồng cá nhân.</p>
+  <div class="tbl-wrap" style="margin-top:6px;">
+    <table>
+      <thead><tr><th>Nguồn</th><th class="num">Hệ số</th><th class="num">100tr tính thành</th><th>Khi nào</th></tr></thead>
+      <tbody>
+        <tr><td>N1 – Khách Công ty cấp</td><td class="num">1.0</td><td class="num">100 tr</td><td>Quảng cáo, fanpage, tổng đài, sự kiện, quản lý phân cho (mặc định)</td></tr>
+        <tr><td>N2 – Khách tự tìm 🌟</td><td class="num">1.0</td><td class="num">100 tr</td><td>Tự tìm, đăng ký MISA trước liên hệ đầu — có thêm thưởng tự tìm</td></tr>
+        <tr><td>N3 – Đối tác giới thiệu</td><td class="num">0.8</td><td class="num">80 tr</td><td>Bác sĩ/CTV giới thiệu đã đăng ký trước; đối tác nhận phí riêng</td></tr>
+        <tr><td>N4 – Khách giao lại</td><td class="num">0.6</td><td class="num">60 tr</td><td>Khách/cơ hội của người khác được giao lại, mình khôi phục & chốt</td></tr>
+        <tr><td>N5 – Đơn chốt sẵn</td><td class="num">0.2</td><td class="num">20 tr</td><td>Cấp trên/đối tác đã chốt; mình chỉ làm thủ tục & giao hàng</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="scale-note">Nguồn bị <b>KHÓA</b> từ lúc khách vào MISA lần đầu — không đổi được. Nguyên tắc thiết kế: ở mọi mốc, khai đúng nguồn tự tìm luôn lợi hơn mọi cách "đi vòng" qua đối tác.</p>
+</section>
+
+<!-- SLIDE 10: TRƯỞNG NHÓM -->
+<section class="slide" id="s10">
+  <div class="eyebrow">08 · TRƯỞNG NHÓM — HOA HỒNG ĐỘI</div>
+  <h2>Dẫn đội không bao giờ thiệt hơn tự làm</h2>
+  <div class="formula">HOA HỒNG ĐỘI&nbsp; =&nbsp; DOANH THU CÁC THÀNH VIÊN&nbsp; ×&nbsp; TỶ LỆ THEO MỨC ĐỘI</div>
+  <div class="tbl-wrap" style="margin-top:10px;">
+    <table>
+      <thead><tr><th>Mức đội</th><th>Đội Kinh doanh — điều kiện</th><th class="num">Tỷ lệ</th><th>Đội Chăm sóc — điều kiện</th><th class="num">Tỷ lệ</th></tr></thead>
+      <tbody>
+        <tr><td>Chưa đạt</td><td>Từ 0%</td><td class="num">0.60%</td><td>Từ 0%</td><td class="num">0.60%</td></tr>
+        <tr><td>Đạt</td><td>Từ 100% chỉ tiêu đội</td><td class="num">1.20%</td><td>Từ 95% nền đội</td><td class="num">1.00%</td></tr>
+        <tr><td>Vượt</td><td>Từ 150%</td><td class="num">1.50%</td><td>Từ 110%</td><td class="num">1.30%</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="card" style="margin-top:16px;">
+    <h3>✅ Kiểm tra: dẫn đội tối thiểu (toàn bậc 1) có thiệt không?</h3>
+    <div class="grid grid-3" style="margin-top:10px;">
+      <div class="kpi"><div class="val">+5.00tr</div><div class="lbl">Trưởng nhóm KD cấp cao (5TV) so với tự làm</div></div>
+      <div class="kpi"><div class="val">+1.30tr</div><div class="lbl">Trưởng nhóm KD (3TV) so với tự làm</div></div>
+      <div class="kpi"><div class="val">+4.75tr</div><div class="lbl">Trưởng nhóm CS cấp cao (5TV) so với tự làm</div></div>
+    </div>
+    <p class="scale-note" style="margin-top:10px;">Kết luận: ở mọi quy mô đội tối thiểu, trưởng nhóm KHÔNG thiệt hơn tự làm ở bậc tương đương — thêm thành viên hoặc thành viên bậc cao hơn luôn làm tăng thu nhập.</p>
+  </div>
+</section>
+
+<!-- SLIDE 11: THƯỞNG -->
+<section class="slide" id="s11">
+  <div class="eyebrow">09 · HỆ THỐNG THƯỞNG (TÚI 3 & TÚI 4)</div>
+  <h2>8 loại thưởng — mọi khoản đều tính trên tiền đã về</h2>
+  <div class="tbl-wrap" style="margin-top:6px;">
+    <table>
+      <thead><tr><th>Khoản thưởng</th><th>Mức</th><th>Ai được</th><th>Điều kiện chính</th></tr></thead>
+      <tbody>
+        <tr><td>Tự tìm khách mới</td><td class="num">1.0% DT</td><td>KD, CS</td><td>Khách mới, đăng ký MISA trước liên hệ, đã trả đủ đơn đầu</td></tr>
+        <tr><td>Đơn lớn</td><td class="num">0.2/0.3/0.4%</td><td>KD</td><td>Đơn từ 50/100/200tr, đã trả đủ, không phải đơn chốt sẵn</td></tr>
+        <tr><td>Đại lý mới đạt chuẩn</td><td class="num">1.0 tr/đại lý</td><td>KD</td><td>≥3 đơn & ≥50tr doanh thu trong 90 ngày</td></tr>
+        <tr><td>Đối tác mới đạt chuẩn</td><td class="num">1.0 tr/đối tác</td><td>KD</td><td>≥3 khách khác nhau, tổng ≥50tr trong 6 tháng, tối đa 3/quý</td></tr>
+        <tr><td>Thưởng quý — đạt đều</td><td class="num">1.5 tr/quý</td><td>KD, CS</td><td>Cả 3 tháng đạt chỉ tiêu</td></tr>
+        <tr><td>Thưởng quý — đạt cao</td><td class="num">3.0 tr/quý</td><td>KD, CS</td><td>Như trên + bình quân đạt Mốc 3</td></tr>
+        <tr><td>Tái kích hoạt khách ngủ đông</td><td class="num">0.5% DT đơn</td><td>CS</td><td>Không mua 120 ngày, đơn đầu từ 5tr, đã trả đủ</td></tr>
+        <tr><td>Thưởng nóng</td><td class="num">≤1.0 tr/lần</td><td>Tất cả</td><td>Giám đốc duyệt, tối đa 3 lần/người/tháng</td></tr>
+        <tr><td>Đầu tư đội ngũ (5 khoản)</td><td class="num">1.0 – 5.0 tr</td><td>Trưởng nhóm</td><td>Tuyển/đào tạo đạt chuẩn, nâng bậc, khởi tạo đội, kế cận, giữ người</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- SLIDE 12: TRẦN CHI PHÍ -->
+<section class="slide" id="s12">
+  <div class="eyebrow">10 · KIỂM SOÁT NGÂN SÁCH — 4 TÚI CHI PHÍ</div>
+  <h2>Trần quỹ cơ chế nhân sự: 12% doanh thu — có cảnh báo sớm</h2>
+  <div class="grid grid-2" style="margin-top:10px;">
+    <div class="funnel-box">
+      <div class="funnel-row" style="background:rgba(79,140,255,0.15);">Túi 1 — Lương & hoa hồng <span>10.5%</span></div>
+      <div class="funnel-row" style="background:rgba(255,184,79,0.15);">Túi 3 — Thưởng hiệu suất <span>1.0%</span></div>
+      <div class="funnel-row" style="background:rgba(180,139,255,0.15);">Túi 4 — Đầu tư đội ngũ <span>0.5%</span></div>
+      <div class="funnel-row" style="background:rgba(34,197,139,0.25);font-size:16px;">TRẦN QUỸ CƠ CHẾ NHÂN SỰ (1+3+4) <span>12.0%</span></div>
+      <div class="funnel-row" style="background:rgba(255,93,108,0.1);border:1px dashed var(--danger);">Túi 2 — Phí đối tác (ngoài quỹ) <span>1.5%</span></div>
+    </div>
+    <div class="card">
+      <h3>Ngưỡng cảnh báo (trên doanh thu)</h3>
+      <table style="font-size:14px;">
+        <tbody>
+          <tr><td>Dưới 9.0%</td><td><span class="pill pill-good">Dư địa ngân sách</span></td></tr>
+          <tr><td>9.0% – 10.5%</td><td><span class="pill pill-good">Vận hành mục tiêu</span></td></tr>
+          <tr><td>10.5% – 11.5%</td><td><span class="pill pill-warn">Cảnh báo</span></td></tr>
+          <tr><td>11.5% – 12.0%</td><td><span class="pill pill-bad">Cảnh báo cao</span></td></tr>
+          <tr><td>Trên 12.0%</td><td><span class="pill pill-bad">Vượt kế hoạch</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <p class="scale-note" style="margin-top:14px;">Mục tiêu vận hành: <b>9.0% – 10.5%</b>. Công ty không cắt khoản đã phát sinh hợp lệ chỉ vì doanh thu thấp làm tỷ lệ vượt trần — xử lý bằng điều chỉnh kế hoạch nhân sự, tạm dừng chương trình thưởng mới, hoặc sửa tham số cho kỳ sau.</p>
+</section>
+
+<!-- SLIDE 13: MIN-MAX CHO QUẢN LÝ -->
+<section class="slide" id="s13">
+  <div class="eyebrow">11 · KỊCH BẢN KIỂM SOÁT — DÀNH CHO QUẢN LÝ</div>
+  <h2>% chi phí trên doanh thu: từ MIN (đúng chỉ tiêu) đến MAX (đạt mọi chính sách)</h2>
+  <div class="tbl-wrap" style="margin-top:6px;">
+    <table>
+      <thead><tr><th>Vai trò</th><th class="num">% DT — MIN</th><th class="num">% DT — MAX</th><th>Ghi chú</th></tr></thead>
+      <tbody>
+        <tr><td>Chuyên viên kinh doanh (các bậc)</td><td class="num">7.0% – 9.1%</td><td class="num">7.8% – 9.3%</td><td>Càng bậc cao, % chi phí/doanh thu càng giảm</td></tr>
+        <tr><td>Chuyên viên chăm sóc (các bậc)</td><td class="num">3.8% – 5.1%</td><td class="num">4.0% – 5.0%</td><td>Rẻ hơn Kinh doanh — khách cũ, công sức thấp hơn</td></tr>
+        <tr><td>Trưởng nhóm kinh doanh (các cấp)</td><td class="num">3.4% – 4.6%</td><td class="num">3.7% – 5.2%</td><td>% giảm khi đội lớn hơn (hiệu ứng quy mô)</td></tr>
+        <tr><td>Trưởng nhóm chăm sóc (các cấp)</td><td class="num">2.2% – 3.2%</td><td class="num">2.9% – 4.5%</td><td></td></tr>
+        <tr><td><b>CẢ ĐỘI KINH DOANH</b> (TN+3TV)</td><td class="num"><b>11.3%</b></td><td class="num" style="color:var(--danger);"><b>11.8%</b></td><td>So với trần quỹ 12% — vẫn trong giới hạn</td></tr>
+        <tr><td><b>CẢ ĐỘI CHĂM SÓC</b> (TN+3TV)</td><td class="num"><b>7.8%</b></td><td class="num"><b>8.4%</b></td><td>Dư địa lớn so với trần</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="scale-note">MAX là mức trần lý thuyết (đạt mọi chính sách thưởng cùng lúc) — thực tế hiếm khi đạt đồng thời. Trần kiểm ở cấp phòng trên doanh thu toàn Công ty, nên một đội vượt dòng riêng chưa chắc làm cả phòng vượt trần.</p>
+</section>
+
+<!-- SLIDE 14: SO SÁNH CŨ MỚI -->
+<section class="slide" id="s14">
+  <div class="eyebrow">12 · SO VỚI CƠ CHẾ ĐANG ÁP DỤNG</div>
+  <h2>Nguyên tắc vàng: làm đúng chỉ tiêu thì KHÔNG thấp hơn hiện tại</h2>
+  <div class="two-col">
+    <div class="compare-col compare-old">
+      <h3 style="color:var(--danger);">Cơ chế đang áp dụng</h3>
+      <ul class="cl xl">
+        <li>Lương cố định 10tr cho mọi người — cào bằng</li>
+        <li>Mốc hoa hồng tuyệt đối 100/200/500tr, giống nhau cho mọi bậc</li>
+        <li>Chỉ phân biệt khách mới / khách cũ, không có nguồn</li>
+        <li>Không có bất kỳ khoản thưởng nào</li>
+        <li>Chưa có cơ chế riêng cho trưởng nhóm</li>
+        <li>Không có trần chi phí kiểm soát ngân sách</li>
+      </ul>
+    </div>
+    <div class="compare-col compare-new">
+      <h3 style="color:var(--accent2);">Cơ chế mới</h3>
+      <ul class="cl">
+        <li>Lương theo 8 bậc (10.0–15.5tr) — người giỏi được trả cao hơn</li>
+        <li>Mốc hoa hồng theo % chỉ tiêu của bậc — công bằng theo năng lực</li>
+        <li>6 nguồn khách với hệ số riêng — ghi nhận đúng công sức</li>
+        <li>8 loại thưởng có điều kiện rõ ràng</li>
+        <li>Hoa hồng đội + thưởng đầu tư đội ngũ cho trưởng nhóm</li>
+        <li>4 túi chi phí, trần quỹ 12% doanh thu — ngân sách chủ động</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 15: KIỂM CHỨNG SỐ -->
+<section class="slide" id="s15">
+  <div class="eyebrow">12 · SO SÁNH THEO SỐ — KIỂM CHỨNG "KHÔNG THẤP HƠN"</div>
+  <h2>Ở bậc phù hợp, mọi mức từ chỉ tiêu trở lên đều ngang hoặc cao hơn hiện tại</h2>
+  <div class="grid grid-2" style="margin-top:10px;">
+    <div class="card glow-kd">
+      <h3>Kinh doanh (toàn khách mới, chưa tính thưởng)</h3>
+      <table style="font-size:13.5px;">
+        <thead><tr><th>DT tháng (tr)</th><th class="num">Đang áp dụng</th><th class="num">Mới (bậc phù hợp)</th><th class="num">Chênh</th></tr></thead>
+        <tbody>
+          <tr><td>200</td><td class="num">17.00</td><td class="num">17.00</td><td class="num" style="color:var(--accent2);">0</td></tr>
+          <tr><td>300</td><td class="num">20.50</td><td class="num">22.00</td><td class="num" style="color:var(--accent2);">+1.50</td></tr>
+          <tr><td>500</td><td class="num">27.50</td><td class="num">33.00</td><td class="num" style="color:var(--accent2);">+5.50</td></tr>
+          <tr><td>1,000</td><td class="num">50.00</td><td class="num">57.50</td><td class="num" style="color:var(--accent2);">+7.50</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card glow-cs">
+      <h3>Chăm sóc (toàn khách cũ, chưa tính thưởng)</h3>
+      <table style="font-size:13.5px;">
+        <thead><tr><th>DT danh mục (tr)</th><th class="num">Đang áp dụng</th><th class="num">Mới (bậc phù hợp)</th><th class="num">Chênh</th></tr></thead>
+        <tbody>
+          <tr><td>350</td><td class="num">16.13</td><td class="num">16.13</td><td class="num" style="color:var(--accent2);">0</td></tr>
+          <tr><td>500</td><td class="num">18.75</td><td class="num">20.25</td><td class="num" style="color:var(--accent2);">+1.50</td></tr>
+          <tr><td>900</td><td class="num">28.00</td><td class="num">31.25</td><td class="num" style="color:var(--accent2);">+3.25</td></tr>
+          <tr><td>1,100</td><td class="num">32.00</td><td class="num">37.50</td><td class="num" style="color:var(--accent2);">+5.50</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="card" style="margin-top:16px;">
+    <p class="sub" style="font-size:15px;margin:0;">Vùng <b>dưới chỉ tiêu bậc 1</b>: thu nhập mới thấp hơn hiện tại (ví dụ: doanh thu 100–150tr Kinh doanh thấp hơn 1.3–1.9tr) — đây CHÍNH LÀ phần thách thức có chủ đích mà cơ chế cũ không có, được giảm nhẹ bằng lộ trình người mới 50%/80%/100% và bảo lưu thu nhập 3 tháng đầu.</p>
+  </div>
+</section>
+
+<!-- SLIDE 16: KHI CÓ THƯỞNG -->
+<section class="slide" id="s16">
+  <div class="eyebrow">12 · KHI CÓ THƯỞNG — ĐÒN BẨY THỰC SỰ</div>
+  <h2>Cơ chế cũ không có thưởng — cơ chế mới có thể cao hơn tới +25.5 triệu/tháng</h2>
+  <div class="tbl-wrap" style="margin-top:10px;">
+    <table>
+      <thead><tr><th>DT tháng (tr)</th><th class="num">Đang áp dụng</th><th class="num">Mới — không thưởng</th><th class="num">Mới — thưởng thường gặp</th><th class="num">Mới — thưởng tối đa</th><th class="num">Tối đa hơn hiện tại</th></tr></thead>
+      <tbody>
+        <tr><td>200</td><td class="num">17.00</td><td class="num">17.00</td><td class="num">18.10</td><td class="num">22.50</td><td class="num" style="color:var(--accent2);font-weight:700;">+5.50</td></tr>
+        <tr><td>300</td><td class="num">20.50</td><td class="num">22.00</td><td class="num">23.40</td><td class="num">29.00</td><td class="num" style="color:var(--accent2);font-weight:700;">+8.50</td></tr>
+        <tr><td>500</td><td class="num">27.50</td><td class="num">33.00</td><td class="num">35.00</td><td class="num">43.00</td><td class="num" style="color:var(--accent2);font-weight:700;">+15.50</td></tr>
+        <tr><td>1,000</td><td class="num">50.00</td><td class="num">57.50</td><td class="num">61.50</td><td class="num">75.50</td><td class="num" style="color:var(--accent2);font-weight:700;">+25.50</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="scale-note" style="margin-top:14px;">Giả định "thường gặp": 30% khách tự tìm, thưởng quý đạt đều. Giả định "tối đa": 100% khách tự tìm + mọi điều kiện thưởng. Đây là động lực chính để nhân viên chủ động mở khách mới và chốt đơn lớn.</p>
+</section>
+
+<!-- SLIDE 17: AI LỢI AI CẦN LƯU Ý -->
+<section class="slide" id="s17">
+  <div class="eyebrow">13 · TÁC ĐỘNG NHÂN SỰ</div>
+  <h2>Ai được lợi rõ, ai cần lưu ý khi chuyển đổi</h2>
+  <div class="tbl-wrap" style="margin-top:6px;">
+    <table>
+      <thead><tr><th>Nhóm người</th><th>Thay đổi</th><th>Cách xử lý</th></tr></thead>
+      <tbody>
+        <tr><td><span class="pill pill-good">Vượt chỉ tiêu, tự tìm khách</span></td><td>Thu nhập tăng rõ (mốc cao + thưởng tự tìm + đơn lớn + thưởng quý)</td><td>Nhóm cơ chế muốn giữ và nhân rộng</td></tr>
+        <tr><td><span class="pill pill-warn">Dưới chỉ tiêu</span></td><td>Hoa hồng giảm: 2.0% thay vì 3.0–3.5% hiện tại</td><td>Chỉ tiêu người mới 50%/80%; bảo lưu thu nhập 3 tháng đầu; kế hoạch cải thiện 30 ngày</td></tr>
+        <tr><td><span class="pill pill-good">Bậc 1 đúng chỉ tiêu</span></td><td>Ngang hiện tại; cao hơn khi có tự tìm/đơn lớn/vượt mốc</td><td>Xếp bậc lần đầu theo doanh thu thực tế 3 tháng</td></tr>
+        <tr><td><span class="pill pill-good">Người chăm nhiều khách cũ</span></td><td>Chuyển nhóm Chăm sóc: giữ nền → ngang/cao hơn hiện tại</td><td>Chốt danh mục & doanh thu nền trước ngày áp dụng</td></tr>
+        <tr><td><span class="pill pill-good">Người mở khách rồi bàn giao</span></td><td>Không mất quyền lợi: đồng hành 0.5% trên mua lại, 6 tháng</td><td>Bàn giao đúng hạn là điều kiện nhận đồng hành</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="formula" style="margin-top:16px;">Khuyến nghị: chạy Bảng tính lương với dữ liệu thật 3 tháng gần nhất từng người trước khi ký — ai giảm quá 10% thì xem lại xếp bậc</div>
+</section>
+
+<!-- SLIDE 18: CẤM & XỬ LÝ -->
+<section class="slide" id="s18">
+  <div class="eyebrow">14 · KIỂM SOÁT RỦI RO & TUÂN THỦ</div>
+  <h2>Những việc bị cấm — vi phạm thì thu hồi toàn bộ hoa hồng, thưởng liên quan</h2>
+  <div class="grid grid-2" style="margin-top:10px;">
+    <div class="card" style="border-color:rgba(255,93,108,0.4);">
+      <h3 style="color:var(--danger);">🚫 Hành vi bị cấm</h3>
+      <ul class="cl xl">
+        <li>Khai sai nguồn khách; tạo khách trùng; đăng ký khách đã có trên MISA thành "khách tự tìm"</li>
+        <li>Hẹn khách dời ngày trả tiền, giữ tiền khách, nhận tiền vào tài khoản cá nhân</li>
+        <li>Tách một đơn thành nhiều đơn / gộp nhiều đơn để lấy thưởng đơn lớn</li>
+        <li>Giảm giá, chiết khấu, tặng hàng vượt thẩm quyền chưa duyệt</li>
+        <li>Đưa người thân làm đối tác để nhận khách của chính mình</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>⚖️ Cơ chế kiểm tra tự động</h3>
+      <ul class="cl">
+        <li>Kế toán kiểm ngẫu nhiên 10% đơn khách tự tìm (N2) mỗi tháng</li>
+        <li>Kiểm 20% đơn đối tác mới trong 6 tháng đầu</li>
+        <li>Kiểm 100% đơn từ 200 triệu đồng</li>
+        <li>Kiểm 100% tiền về trong 3 ngày đầu tháng của đơn đến hạn tháng trước (chặn dời thu tiền)</li>
+        <li>Thiết kế tỷ lệ: khai đúng nguồn luôn lợi hơn "đi vòng" ở MỌI mốc</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 19: LÊN/HẠ BẬC -->
+<section class="slide" id="s19">
+  <div class="eyebrow">15 · ĐÁNH GIÁ & LỘ TRÌNH NHÂN SỰ</div>
+  <h2>Thử việc → Chính thức → Lên bậc → Cảnh báo → Hạ bậc</h2>
+  <div class="flow" style="justify-content:center;margin:20px 0;flex-wrap:wrap;">
+    <div class="step" style="background:rgba(79,140,255,0.15);">Thử việc<br><span style="font-size:11px;color:var(--muted);">lương 85% bậc</span></div>
+    <div class="arrow">→</div>
+    <div class="step" style="background:rgba(34,197,139,0.15);">Đạt thử việc<br><span style="font-size:11px;color:var(--muted);">≥80% chỉ tiêu + ≥70% hiệu suất</span></div>
+    <div class="arrow">→</div>
+    <div class="step" style="background:rgba(34,197,139,0.2);">Chính thức</div>
+    <div class="arrow">→</div>
+    <div class="step" style="background:rgba(79,140,255,0.2);">Lên bậc<br><span style="font-size:11px;color:var(--muted);">BQ 3 tháng đạt mốc, HS ≥85%</span></div>
+  </div>
+  <div class="grid grid-3" style="margin-top:10px;">
+    <div class="card">
+      <h3 style="color:var(--accent3);">⚠️ Cảnh báo</h3>
+      <p class="sub" style="font-size:14px;">2 tháng liên tiếp dưới 80% chỉ tiêu, hoặc điểm hiệu suất dưới 60% → kế hoạch cải thiện 30 ngày, có người kèm.</p>
+    </div>
+    <div class="card">
+      <h3 style="color:var(--danger);">↓ Hạ bậc</h3>
+      <p class="sub" style="font-size:14px;">Bình quân 6 tháng dưới 60% chỉ tiêu, hoặc 2 lần không đạt kế hoạch cải thiện trong 12 tháng.</p>
+    </div>
+    <div class="card">
+      <h3 style="color:var(--danger);">⛔ Chấm dứt ngay</h3>
+      <p class="sub" style="font-size:14px;">Giữ tiền khách, nhận tiền cá nhân, khai sai nguồn hệ thống, thông đồng đối tác, lộ dữ liệu khách.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 20: QUY TRÌNH CHỐT LƯƠNG -->
+<section class="slide" id="s20">
+  <div class="eyebrow">16 · QUY TRÌNH CHỐT LƯƠNG HẰNG THÁNG</div>
+  <h2>7 bước, 10 ngày làm việc — minh bạch từng vai</h2>
+  <div class="tbl-wrap" style="margin-top:6px;">
+    <table>
+      <thead><tr><th class="num">Bước</th><th>Người thực hiện</th><th>Công việc</th><th>Thời hạn</th></tr></thead>
+      <tbody>
+        <tr><td class="num">1</td><td>Nhân viên</td><td>Rà soát giao dịch, nguồn khách, điểm hiệu suất</td><td>3 ngày đầu tháng</td></tr>
+        <tr><td class="num">2</td><td>Trưởng nhóm</td><td>Xác nhận doanh thu, chia 70/30, chất lượng, điểm hiệu suất</td><td>3 ngày đầu tháng</td></tr>
+        <tr><td class="num">3</td><td>Kế toán</td><td>Xác nhận tiền về, nguồn khách, hoàn trả, doanh thu nền</td><td>3 ngày đầu tháng</td></tr>
+        <tr><td class="num">4</td><td>Nhân sự</td><td>Tổng hợp Bảng tính lương</td><td>Đến ngày 5</td></tr>
+        <tr><td class="num">5</td><td>Tài chính</td><td>Kiểm tra từng túi chi phí và trần quỹ</td><td>Đến ngày 5</td></tr>
+        <tr><td class="num">6</td><td>Ban điều hành</td><td>Phê duyệt bảng đối soát</td><td>Đến ngày 8</td></tr>
+        <tr><td class="num">7</td><td>Nhân sự</td><td>Gửi bảng kê thu nhập; lưu lịch sử kết quả</td><td>Đến ngày 10</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- SLIDE 21: LỘ TRÌNH TRIỂN KHAI -->
+<section class="slide" id="s21">
+  <div class="eyebrow">17 · LỘ TRÌNH TRIỂN KHAI</div>
+  <h2>Chuyển đổi có bảo lưu thu nhập — không ai bị sốc</h2>
+  <div class="grid grid-2" style="margin-top:10px;">
+    <div class="card glow-kd">
+      <h3>Trước khi áp dụng</h3>
+      <ul class="cl">
+        <li>Xếp bậc từng người theo doanh thu thực tế 3 tháng</li>
+        <li>Chuẩn hóa nguồn khách & lịch sử doanh thu trên MISA</li>
+        <li>Xác định danh mục bàn giao & doanh thu nền</li>
+        <li>Giao chỉ tiêu và tiêu chí hiệu suất</li>
+        <li>Đối chiếu thu nhập cũ và mới cho từng người</li>
+        <li>Hướng dẫn cách đọc bảng lương cho toàn phòng</li>
+      </ul>
+    </div>
+    <div class="card glow-cs">
+      <h3>Trong 3 tháng đầu áp dụng</h3>
+      <ul class="cl">
+        <li>Lộ trình chỉ tiêu chuyển đổi: 80% → 90% → 100% chỉ tiêu bậc</li>
+        <li><b>Bảo lưu thu nhập</b>: nếu thu nhập mới thấp hơn bình quân 3 tháng trước, Công ty chi phần chênh lệch từ Túi 4</li>
+        <li>Điều kiện bảo lưu: đạt từ ngưỡng cảnh báo chỉ tiêu trở lên</li>
+        <li>Theo dõi sát tỷ lệ Quỹ cơ chế nhân sự / doanh thu hằng tháng</li>
+      </ul>
+    </div>
+  </div>
+  <div class="formula" style="margin-top:18px;">Không áp dụng hồi tố bất lợi với khoản đã phát sinh theo cơ chế trước</div>
+</section>
+
+<!-- SLIDE 22: RỦI RO CEO -->
+<section class="slide" id="s22">
+  <div class="eyebrow">18 · PHẢN BIỆN — GÓC NHÌN CEO</div>
+  <h2>6 điểm cần làm rõ trước khi ký duyệt</h2>
+  <div class="grid grid-2" style="margin-top:6px;">
+    <div class="card" style="border-color:rgba(255,93,108,0.4);">
+      <h3 style="color:var(--danger);">🔴 Mức độ cao</h3>
+      <ul class="cl xl" style="font-size:14px;">
+        <li><b>Đội KD ở MAX = 11.8%</b>, rất sát trần 12% — nếu 2-3 đội cùng đạt MAX một tháng, cả phòng có thể thực sự vượt trần, không chỉ 1 đội riêng lẻ</li>
+        <li><b>Thưởng đội ngũ tối đa 12.5tr/tháng/trưởng nhóm</b> trong khi Túi 4 chỉ có trần 0.5% doanh thu — nhiều trưởng nhóm cùng đạt đủ 5 khoản sẽ vượt ngân sách quý rất nhanh</li>
+        <li>Nguyên tắc "khai đúng nguồn luôn lợi hơn" (Điều 12.4) mới chỉ là lời khẳng định — chưa có bảng số chứng minh ở mọi mốc để Ban điều hành yên tâm ký</li>
+      </ul>
+    </div>
+    <div class="card" style="border-color:rgba(255,184,79,0.4);">
+      <h3 style="color:var(--accent3);">🟡 Mức độ trung bình</h3>
+      <ul class="cl xl" style="font-size:14px;">
+        <li>Thưởng nóng do "Giám đốc duyệt" — chưa có tiêu chí định lượng, dễ bị cho là cảm tính giữa các đội</li>
+        <li>Doanh thu nền Chăm sóc lấy bình quân 3 tháng trước — Kinh doanh có thể dồn/giảm đơn trước bàn giao để làm méo nền, cả 2 chiều đều có thể bị lợi dụng</li>
+        <li>"Khách chiến lược" được miễn thời hạn bàn giao do Giám đốc duyệt nhưng không có trần thời gian giữ tối đa — rủi ro làm méo mục tiêu chuyên môn hóa KD/CS</li>
+      </ul>
+    </div>
+  </div>
+  <div class="formula" style="margin-top:16px;">Khuyến nghị: công bố ngân sách Túi 4 theo quý TRƯỚC + thêm kịch bản "cả phòng đạt 130%" (không chỉ MAX lý thuyết) vào báo cáo kiểm soát quỹ hằng tháng</div>
+</section>
+
+<!-- SLIDE 23: RỦI RO NHÂN SỰ -->
+<section class="slide" id="s23">
+  <div class="eyebrow">18 · PHẢN BIỆN — GÓC NHÌN NHÂN SỰ</div>
+  <h2>6 điểm dễ gây hiểu lầm hoặc tranh chấp nội bộ</h2>
+  <div class="tbl-wrap" style="margin-top:6px;">
+    <table style="font-size:13.5px;">
+      <thead><tr><th>Điểm chưa rõ</th><th>Vì sao dễ hiểu lầm</th><th>Đề xuất chỉnh wording</th></tr></thead>
+      <tbody>
+        <tr><td>3 khái niệm gần giống: <i>doanh thu quy đổi / danh mục / nền</i></td><td>Nhân viên mới dễ nhầm "nền" (mẫu số = chỉ tiêu) với "danh mục" (tử số = kết quả)</td><td>Đổi "doanh thu nền" → <b>"Chỉ tiêu Chăm sóc (= nền 3 tháng)"</b> để từ "chỉ tiêu" luôn đi cùng</td></tr>
+        <tr><td>"Khách chưa đủ 3 tháng <b>không tính vào % hoàn thành</b>" (Điều 17.8)</td><td>Dễ đọc nhầm thành "không có hoa hồng" — thực tế vẫn được hưởng đầy đủ, chỉ không đẩy mốc</td><td>Viết lại 2 vế rõ ràng: "(a) VẪN được hoa hồng đầy đủ; (b) chỉ KHÔNG dùng để tính % hoàn thành"</td></tr>
+        <tr><td>Bảo lưu thu nhập chuyển đổi chỉ áp dụng khi đạt ≥80% chỉ tiêu</td><td>Người đang ở 60-79% (rất dễ xảy ra lúc mới đổi cơ chế) lại là người KHÔNG được bảo lưu — đúng lúc cần hỗ trợ nhất</td><td>Hạ ngưỡng bảo lưu xuống 60% CHỈ trong 3 tháng chuyển đổi đầu, tách biệt với ngưỡng cảnh báo kỷ luật</td></tr>
+        <tr><td>Chia hoa hồng 70/30 "người phụ trách chính / phối hợp" — ai quyết?</td><td>Không có tiêu chí khách quan, dễ thành điểm tranh chấp giữa đồng nghiệp</td><td>Mặc định: người tạo hồ sơ khách trên MISA đầu tiên = phụ trách chính, trừ khi có thỏa thuận khác xác nhận trước khi chốt</td></tr>
+        <tr><td>Hai nghĩa của từ "mốc": <i>mốc hoa hồng</i> (theo tháng) vs <i>mốc lên bậc</i> (bình quân 3 tháng)</td><td>Cùng một từ, chu kỳ tính hoàn toàn khác — dễ tự đoán sai thời điểm lên bậc</td><td>Đổi "mốc lên bậc" → <b>"Ngưỡng lên bậc (bình quân 3 tháng)"</b> để tên tự giải thích chu kỳ</td></tr>
+        <tr><td>Công thức "nhân tỷ lệ ngày công" cho người vào/nghỉ giữa tháng không có ví dụ số</td><td>Đúng nhóm người dễ thắc mắc nhất lại không tự tính được — ngược với tinh thần "ai cũng tự tính được"</td><td>Thêm ví dụ: "Vào làm ngày 16/30 → ngày công 50% → chỉ tiêu, lương cơ bản, KPI và phụ cấp đều nhân 50%"</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- SLIDE 24: TỔNG KẾT -->
+<section class="slide title-slide" id="s24">
+  <div class="eyebrow">TÓM TẮT CHO BAN ĐIỀU HÀNH</div>
+  <h2 style="font-size:36px;">4 thay đổi lớn nhất của Cơ chế mới</h2>
+  <div class="grid grid-4" style="margin-top:20px;max-width:1100px;">
+    <div class="kpi"><div class="val" style="font-size:26px;">8 bậc</div><div class="lbl">Lương theo năng lực, không cào bằng</div></div>
+    <div class="kpi"><div class="val" style="font-size:26px;">6 nguồn</div><div class="lbl">Khách có hệ số riêng, ghi nhận đúng công sức</div></div>
+    <div class="kpi"><div class="val" style="font-size:26px;">8 loại</div><div class="lbl">Thưởng có điều kiện — đòn bẩy tăng trưởng</div></div>
+    <div class="kpi"><div class="val" style="font-size:26px;">12%</div><div class="lbl">Trần quỹ chi phí — ngân sách chủ động</div></div>
+  </div>
+  <p class="sub" style="margin:24px auto 0;">Nguyên tắc cốt lõi: <b>làm đúng chỉ tiêu thì không thấp hơn hiện tại</b> · <b>vượt mốc hoặc có thưởng thì cao hơn rõ rệt</b> · <b>dưới chỉ tiêu thì thấp hơn</b> — đây là phần thách thức có chủ đích để thúc đẩy tăng trưởng, luôn đi kèm bảo lưu thu nhập và lộ trình cho người mới.</p>
+  <div class="cover-badge">
+    <span>Bản trình phê duyệt</span>
+    <span>9 chương · 31 điều</span>
+  </div>
+</section>
+
+<!-- SLIDE 25: Q&A - CEO, KẾ TOÁN, PHÁP LÝ -->
+<section class="slide" id="s25">
+  <div class="eyebrow">Q&A · 1/2 — CEO · KẾ TOÁN · PHÁP LÝ</div>
+  <h2>Hỏi — Đáp: những câu chắc chắn sẽ được hỏi khi duyệt</h2>
+  <div class="grid grid-2" style="margin-top:6px;">
+    <div class="card glow-tn">
+      <h3>❓ "Trần quỹ 12% có chặn vượt chi phí ngay tháng đó không?"</h3>
+      <p class="sub" style="font-size:14.5px;">👉 <b>Không.</b> Theo Điều 3.3, Công ty không tự động cắt khoản đã phát sinh hợp lệ. Trần 12% là <b>ngưỡng cảnh báo để điều chỉnh tham số cho các tháng SAU</b> (Điều 28.3) — kiểm soát mềm, không phải ngân sách cứng chặn ngay.</p>
+    </div>
+    <div class="card glow-tn">
+      <h3>❓ "Nếu nhiều đội cùng đạt mức cao một tháng, Công ty có bị vượt ngân sách thật không?"</h3>
+      <p class="sub" style="font-size:14.5px;">👉 Có khả năng — kịch bản MAX của riêng 1 đội Kinh doanh đã là 11.8%, rất sát trần 12%. Cần thêm báo cáo "nếu cả phòng cùng đạt mức cao" (không chỉ từng đội riêng) vào kiểm soát quỹ hằng tháng để thấy rủi ro thật.</p>
+    </div>
+    <div class="card glow-tn">
+      <h3>❓ "Có thể chấm dứt hợp đồng chỉ vì nhân viên không đạt doanh thu không?"</h3>
+      <p class="sub" style="font-size:14.5px;">👉 Chỉ hợp pháp khi Công ty đã ban hành <b>Quy chế đánh giá mức độ hoàn thành công việc</b> riêng, đúng thủ tục Bộ luật Lao động (tham khảo ý kiến người lao động, thông báo trước). Quy chế lương hiện tại mới chỉ "là một phần" của quy chế đó (Điều 26.12) — cần luật sư xác nhận văn bản độc lập trước khi áp dụng Điều 26.9.</p>
+    </div>
+    <div class="card glow-tn">
+      <h3>❓ "Thu hồi hoa hồng do vi phạm có vi phạm luật về khấu trừ lương không?"</h3>
+      <p class="sub" style="font-size:14.5px;">👉 Quy chế phân loại hoa hồng/thưởng là "tiền thưởng" theo Điều 104 Bộ luật Lao động (không phải lương), nên không bị giới hạn mức khấu trừ 30%/tháng. Đây là lập luận hợp lý nhưng <b>nên có xác nhận bằng văn bản của luật sư</b> trước khi áp dụng thực tế, vì ranh giới "thưởng" và "lương theo kết quả" có thể bị diễn giải khác khi tranh chấp.</p>
+    </div>
+    <div class="card glow-tn">
+      <h3>❓ "Báo cáo tỷ lệ quỹ hằng tháng tính theo kết quả phát sinh hay theo tiền thực chi?"</h3>
+      <p class="sub" style="font-size:14.5px;">👉 Quy chế chưa nói rõ — vì hoa hồng của tháng N lại chi tiền ở tháng N+1. Cần chốt 1 chuẩn duy nhất trước khi Kế toán lập báo cáo đầu tiên, để không mỗi kỳ tính theo cách khác nhau.</p>
+    </div>
+    <div class="card glow-tn">
+      <h3>❓ "Khoản thu hồi do hoàn tiền/vi phạm xử lý trong bao lâu?"</h3>
+      <p class="sub" style="font-size:14.5px;">👉 Hiện chưa có thời hạn cứng. Nên chốt: tính lại và ghi nhận ngay trong kỳ chốt lương gần nhất sau khi xác nhận hoàn tiền, không để tồn đọng quá 1 tháng.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 26: Q&A - TRƯỞNG NHÓM, NHÂN VIÊN, ĐỐI TÁC -->
+<section class="slide" id="s26">
+  <div class="eyebrow">Q&A · 2/2 — TRƯỞNG NHÓM · NHÂN VIÊN · ĐỐI TÁC</div>
+  <h2>Hỏi — Đáp: góc nhìn người trực tiếp làm việc với cơ chế</h2>
+  <div class="grid grid-2" style="margin-top:6px;">
+    <div class="card glow-kd">
+      <h3>❓ "Một thành viên trong đội làm kém có ảnh hưởng gì đến tôi (trưởng nhóm) không?"</h3>
+      <p class="sub" style="font-size:14.5px;">👉 Có. Thành viên không đạt chỉ tiêu 2 tháng liên tiếp bị loại khỏi doanh thu VÀ chỉ tiêu đội (Điều 18.2) — nếu việc này làm đội tụt dưới số thành viên tối thiểu, trưởng nhóm có thể bị tạm dừng phần chênh lệch lương ngạch quản lý (Điều 7.2), dù không phải lỗi quản trị của mình. Đây là rủi ro cần biết trước, không chỉ xuất hiện khi đã xảy ra.</p>
+    </div>
+    <div class="card glow-kd">
+      <h3>❓ "Tôi đang thử việc, tháng 2 cần đạt bao nhiêu % mới chắc được lên chính thức?"</h3>
+      <p class="sub" style="font-size:14.5px;">👉 Thực chất chỉ cần đạt <b>64% chỉ tiêu bậc gốc</b> (= 80% của mức lộ trình tháng 2 đã giảm còn 80%), KHÔNG phải 80% chỉ tiêu đầy đủ của bậc. Cộng điều kiện điểm hiệu suất bình quân 2 tháng từ 70%.</p>
+    </div>
+    <div class="card glow-kd">
+      <h3>❓ "Khách tôi chăm sóc tự rời đi không phải lỗi của tôi, chỉ tiêu (nền) của tôi có bị ảnh hưởng không?"</h3>
+      <p class="sub" style="font-size:14.5px;">👉 Có — nền tính theo doanh thu thực tế 3 tháng trước, không loại trừ các biến động khách quan (trừ hệ số mùa vụ do Ban điều hành duyệt). Nếu khách rời đi vì lý do ngoài tầm kiểm soát (đổi chính sách giá, sự cố sản phẩm...), nên trao đổi với trưởng nhóm để xem xét điều chỉnh nền trước kỳ đánh giá.</p>
+    </div>
+    <div class="card glow-kd">
+      <h3>❓ "Tôi là đại lý, giới thiệu khách khác (không phải tôi tự mua) thì có được phí giới thiệu không?"</h3>
+      <p class="sub" style="font-size:14.5px;">👉 Có — Điều 20 chỉ cấm đại lý nhận phí giới thiệu trên <b>đơn tự mua của chính mình</b>. Khi giới thiệu khách khác có doanh thu thật, đại lý vẫn được hưởng phí giới thiệu như đối tác thường.</p>
+    </div>
+    <div class="card glow-kd">
+      <h3>❓ "Tôi là đối tác, khi nào nhận đủ 100% phí giới thiệu?"</h3>
+      <p class="sub" style="font-size:14.5px;">👉 70% chi ngay khi Công ty thu đủ tiền đơn; 30% còn lại chi sau 7 ngày nếu không phát sinh khiếu nại liên quan trực tiếp đến đơn/đối tác đó (không phải mọi phàn nàn chung của khách).</p>
+    </div>
+    <div class="card glow-kd">
+      <h3>❓ "Tôi mở khách rồi bàn giao cho Chăm sóc — vì sao vẫn nên hỗ trợ khi họ cần?"</h3>
+      <p class="sub" style="font-size:14.5px;">👉 Vì hoa hồng đồng hành 0.5% trong 6 tháng (Điều 16.4) có điều kiện "tham gia hỗ trợ khi nhóm Chăm sóc yêu cầu" — từ chối có biên bản thì dừng đồng hành với khách đó ngay, không chờ hết 6 tháng.</p>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<script>
+  const slides = Array.from(document.querySelectorAll('section.slide'));
+  const dotsEl = document.getElementById('dots');
+  slides.forEach((s,i)=>{
+    const a = document.createElement('a');
+    a.href = '#'+s.id;
+    dotsEl.appendChild(a);
+  });
+  const dotLinks = Array.from(dotsEl.children);
+
+  function onScroll(){
+    const scrollTop = window.scrollY;
+    const docH = document.documentElement.scrollHeight - window.innerHeight;
+    document.getElementById('navFill').style.width = (docH>0 ? (scrollTop/docH*100) : 0) + '%';
+
+    let activeIdx = 0;
+    slides.forEach((s,i)=>{
+      const r = s.getBoundingClientRect();
+      if(r.top <= window.innerHeight*0.5) activeIdx = i;
+    });
+    dotLinks.forEach((d,i)=>d.classList.toggle('active', i===activeIdx));
+    document.getElementById('scrollHint').style.opacity = scrollTop < 60 ? 1 : 0;
+  }
+  window.addEventListener('scroll', onScroll);
+  onScroll();
+</script>
+
+</body>
+</html>
